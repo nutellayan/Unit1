@@ -1,6 +1,3 @@
-[submodule "src/main/java/com/napier/sem/db/test_db"]
-	path = src/main/java/com/napier/sem/db/test_db
-	url = https://github.com/datacharmer/test_db
-[submodule "src/main/java/com/napier/sem/db/db/test_db"]
-	path = src/main/java/com/napier/sem/db/db/test_db
-	url = https://github.com/datacharmer/test_db
+[submodule "db/test_db"]
+path = db/test_db
+url = https://github.com/datacharmer/test_db
