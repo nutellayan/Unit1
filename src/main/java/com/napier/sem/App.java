@@ -29,14 +29,45 @@ public class App {
                 // Connect to database
                 con = DriverManager.getConnection("jdbc:mysql://localhost:3306/employees?useSSL=false", "root", "example");
                 System.out.println("Successfully connected");
-
                 break;
-            } catch (SQLException sqle) {
+            } catch (SQLException | InterruptedException ex) {
                 System.out.println("Failed to connect to database attempt " + i);
-                System.out.println(sqle.getMessage());
-            } catch (InterruptedException ie) {
-                System.out.println("Thread interrupted? Should not happen.");
+                System.out.println(ex.getMessage());
             }
+        }
+    }
+
+    /**
+     * Generate and display salary report for all employees.
+     */
+    public void generateSalaryReport() {
+        try {
+            // Create SQL statement
+            Statement stmt = con.createStatement();
+
+            // SQL query to retrieve salary information for all employees
+            String query = "SELECT e.emp_no, e.first_name, e.last_name, s.salary " +
+                    "FROM employees e " +
+                    "JOIN salaries s ON e.emp_no = s.emp_no " +
+                    "WHERE s.to_date = '9999-01-01'";
+
+            // Execute SQL query
+            ResultSet rs = stmt.executeQuery(query);
+
+            // Display salary report
+            System.out.println("Employee Salary Report:");
+            System.out.println("==================================================");
+            System.out.printf("%-10s %-15s %-15s %-10s\n", "EmployeeID", "First Name", "Last Name", "Salary");
+            System.out.println("--------------------------------------------------");
+            while (rs.next()) {
+                int empNo = rs.getInt("emp_no");
+                String firstName = rs.getString("first_name");
+                String lastName = rs.getString("last_name");
+                int salary = rs.getInt("salary");
+                System.out.printf("%-10d %-15s %-15s %-10d\n", empNo, firstName, lastName, salary);
+            }
+        } catch (SQLException e) {
+            System.out.println("Error executing SQL query: " + e.getMessage());
         }
     }
 
@@ -48,86 +79,25 @@ public class App {
             try {
                 // Close connection
                 con.close();
-                System.out.println("Successfully disconnected from database");
-            } catch (SQLException sqle) {
+                System.out.println("Disconnected from database");
+            } catch (SQLException e) {
                 System.out.println("Error closing connection to database");
-                System.out.println(sqle.getMessage());
+                System.out.println(e.getMessage());
             }
-        }
-    }
-
-    /**
-     * Retrieve employee details including job title, salary, department, and manager from the database based on the provided employee ID.
-     */
-    public Employee getEmployee(int ID) {
-        try {
-            // Create an SQL statement
-            Statement stmt = con.createStatement();
-            // Create string for SQL statement
-            String strSelect =
-                    "SELECT e.emp_no, e.first_name, e.last_name, j.title, s.salary, d.dept_name, CONCAT(m.first_name, ' ', m.last_name) AS manager " +
-                            "FROM employees e " +
-                            "INNER JOIN salaries s ON e.emp_no = s.emp_no AND s.to_date = '9999-01-01' " +
-                            "INNER JOIN titles j ON e.emp_no = j.emp_no AND j.to_date = '9999-01-01' " +
-                            "INNER JOIN dept_emp de ON e.emp_no = de.emp_no AND de.to_date = '9999-01-01' " +
-                            "INNER JOIN departments d ON de.dept_no = d.dept_no " +
-                            "INNER JOIN dept_manager dm ON de.dept_no = dm.dept_no AND dm.to_date = '9999-01-01' " +
-                            "INNER JOIN employees m ON dm.emp_no = m.emp_no " +
-                            "WHERE e.emp_no = " + ID;
-            // Execute SQL statement
-            ResultSet rset = stmt.executeQuery(strSelect);
-            // Return new employee if valid.
-            // Check one is returned
-            if (rset.next()) {
-                Employee emp = new Employee();
-                emp.emp_no = rset.getInt("emp_no");
-                emp.first_name = rset.getString("first_name");
-                emp.last_name = rset.getString("last_name");
-                emp.title = rset.getString("title");
-                emp.salary = rset.getInt("salary");
-                emp.dept_name = rset.getString("dept_name");
-                emp.manager = rset.getString("manager");
-                return emp;
-            } else
-                return null;
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            System.out.println("Failed to get employee details");
-            return null;
-        }
-    }
-
-
-    /**
-     * Display employee information to the console.
-     */
-    public void displayEmployee(Employee emp) {
-        if (emp != null) {
-            System.out.println(
-                    emp.emp_no + " "
-                            + emp.first_name + " "
-                            + emp.last_name + "\n"
-                            + emp.title + "\n"
-                            + "Salary:" + emp.salary + "\n"
-                            + emp.dept_name + "\n"
-                            + "Manager: " + emp.manager + "\n");
         }
     }
 
     public static void main(String[] args) {
         // Create new Application
-        App a = new App();
+        App app = new App();
 
         // Connect to database
-        a.connect();
+        app.connect();
 
-        // Get Employee
-        Employee emp = a.getEmployee(255530);
-
-        // Display results
-        a.displayEmployee(emp);
+        // Generate and display salary report
+        app.generateSalaryReport();
 
         // Disconnect from database
-        a.disconnect();
+        app.disconnect();
     }
 }
