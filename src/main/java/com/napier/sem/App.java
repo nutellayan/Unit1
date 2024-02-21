@@ -1,6 +1,7 @@
 package com.napier.sem;
 
 import java.sql.*;
+import java.util.ArrayList;
 
 public class App {
     /**
@@ -38,39 +39,43 @@ public class App {
     }
 
     /**
-     * Generate and display salary report for all employees.
+     * Gets all the current employees and salaries.
+     * @return A list of all employees and salaries, or null if there is an error.
      */
-    public void generateSalaryReport() {
-        try {
-            // Create SQL statement
+    public ArrayList<Employee> getAllSalaries()
+    {
+        try
+        {
+            // Create an SQL statement
             Statement stmt = con.createStatement();
-
-            // SQL query to retrieve salary information for all employees
-            String query = "SELECT e.emp_no, e.first_name, e.last_name, s.salary " +
-                    "FROM employees e " +
-                    "JOIN salaries s ON e.emp_no = s.emp_no " +
-                    "WHERE s.to_date = '9999-01-01'";
-
-            // Execute SQL query
-            ResultSet rs = stmt.executeQuery(query);
-
-            // Display salary report
-            System.out.println("Employee Salary Report:");
-            System.out.println("==================================================");
-            System.out.printf("%-10s %-15s %-15s %-10s\n", "EmployeeID", "First Name", "Last Name", "Salary");
-            System.out.println("--------------------------------------------------");
-            while (rs.next()) {
-                int empNo = rs.getInt("emp_no");
-                String firstName = rs.getString("first_name");
-                String lastName = rs.getString("last_name");
-                int salary = rs.getInt("salary");
-                System.out.printf("%-10d %-15s %-15s %-10d\n", empNo, firstName, lastName, salary);
+            // Create string for SQL statement
+            String strSelect =
+                    "SELECT employees.emp_no, employees.first_name, employees.last_name, salaries.salary "
+                            + "FROM employees, salaries "
+                            + "WHERE employees.emp_no = salaries.emp_no AND salaries.to_date = '9999-01-01' "
+                            + "ORDER BY employees.emp_no ASC";
+            // Execute SQL statement
+            ResultSet rset = stmt.executeQuery(strSelect);
+            // Extract employee information
+            ArrayList<Employee> employees = new ArrayList<>();
+            while (rset.next())
+            {
+                Employee emp = new Employee();
+                emp.emp_no = rset.getInt("employees.emp_no");
+                emp.first_name = rset.getString("employees.first_name");
+                emp.last_name = rset.getString("employees.last_name");
+                emp.salary = rset.getInt("salaries.salary");
+                employees.add(emp);
             }
-        } catch (SQLException e) {
-            System.out.println("Error executing SQL query: " + e.getMessage());
+            return employees;
+        }
+        catch (Exception e)
+        {
+            System.out.println(e.getMessage());
+            System.out.println("Failed to get salary details");
+            return null;
         }
     }
-
     /**
      * Disconnect from the MySQL database.
      */
@@ -87,17 +92,21 @@ public class App {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args)
+    {
         // Create new Application
-        App app = new App();
+        App a = new App();
 
         // Connect to database
-        app.connect();
+        a.connect();
 
-        // Generate and display salary report
-        app.generateSalaryReport();
+        // Extract employee salary information
+        ArrayList<Employee> employees = a.getAllSalaries();
+
+        // Test the size of the returned data - should be 240124
+        System.out.println(employees.size());
 
         // Disconnect from database
-        app.disconnect();
+        a.disconnect();
     }
 }
